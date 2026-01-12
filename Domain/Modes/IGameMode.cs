@@ -1,5 +1,6 @@
 ﻿namespace Domain.Modes;
 using ValueObjects;
+using Entities;
 
 public interface IGameMode
 {
@@ -7,6 +8,7 @@ public interface IGameMode
     /// Creates a specific initial score state according to the specific game mode.
     /// </summary>
     PlayerScore CreateInitialScore(Guid playerId);
+    void ValidatePlayers(IReadOnlyCollection<Player> players);
     
     /// <summary>
     /// Evaluates the result of a throw according to the specific game mode.
@@ -14,5 +16,6 @@ public interface IGameMode
     ThrowEvaluationResult EvaluateThrow(
         Guid playerId,
         PlayerScore playerScore,
-        ThrowData throwData);
+        ThrowData throwData,
+        IReadOnlyDictionary<Guid, PlayerScore> allPlayerScores);
 }

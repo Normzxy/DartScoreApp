@@ -3,8 +3,8 @@ using Modes;
 
 public enum ThrowOutcome
 {
-    Continue,
     Bust,
+    Continue,
     Win
 }
 
@@ -13,30 +13,30 @@ public enum ThrowOutcome
 /// </summary>
 public sealed record ThrowEvaluationResult
 {
-    public ThrowOutcome Outcome { get; init; }
-    public PlayerScore UpdatedScore { get; init; } = null!;
+    public ThrowOutcome Outcome { get; private init; }
+    public PlayerScore UpdatedScore { get; private init; } = null!;
     // Optional, because those are edited only in specific situations.
     public IReadOnlyDictionary<Guid, PlayerScore>? OtherUpdatedStates { get; init; }
-    
+
+    // Game uses internal snapshot to restore player's score,
+    // so there's no need to return UpdatedScore.
+    public static ThrowEvaluationResult Bust()
+        => new()
+    { 
+        Outcome = ThrowOutcome.Bust,
+    };
+
     public static ThrowEvaluationResult Continue(
         PlayerScore updatedScore,
-        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null) => new() 
-    { 
+        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null) => new()
+    {
         Outcome = ThrowOutcome.Continue, 
         UpdatedScore = updatedScore, 
         OtherUpdatedStates = othersScore
     };
-    
-    public static ThrowEvaluationResult Bust(
-        PlayerScore restoredScore) => new()
-    { 
-        Outcome = ThrowOutcome.Bust,
-        UpdatedScore = restoredScore
-    };
 
     public static ThrowEvaluationResult Win(
-        Guid winnerId,
-        PlayerScore finalState) => new() 
+        PlayerScore finalState) => new()
     { 
         Outcome = ThrowOutcome.Win,
         UpdatedScore = finalState

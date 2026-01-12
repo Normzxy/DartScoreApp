@@ -27,13 +27,13 @@ public class Game
     public Game(IGameMode gameMode, List<Player> players)
     {
         _gameMode = gameMode ?? throw new ArgumentNullException(nameof(gameMode));
-
         ArgumentNullException.ThrowIfNull(players);
         _players.AddRange(players);
+        _gameMode.ValidatePlayers(_players);
 
-        if (_players.Count == 0)
+        if (players.Count is < 1 or > 2)
         {
-            throw new ArgumentException("At least one player is required.", nameof(players));
+            throw new ArgumentException("Game supports 1–2 players.");
         }
 
         foreach (var player in _players)
@@ -41,8 +41,8 @@ public class Game
             _scoreStates[player.Id] = _gameMode.CreateInitialScore(player.Id);
         }
     }
-    
-    public Player CurrentPlayer => _players[_currentPlayerIdx];
+
+    private Player CurrentPlayer => _players[_currentPlayerIdx];
     
     public PlayerScore GetPlayerState(Guid playerId) =>
         _scoreStates.TryGetValue(playerId, out var state) ? state : throw new KeyNotFoundException();
@@ -65,14 +65,18 @@ public class Game
             _turnSnapshot = _scoreStates[playerId];
         }
         
-        var currentScore = _scoreStates[playerId];
+        var playerScore = _scoreStates[playerId];
         
         // Save throw data with aditional idenitifiers.
         var @throw = new Throw(playerId, throwData);
         _history.Add(@throw);
         
         // Score evaluation for a specific game mode, based on a throw info.
-        var throwEvaluation = _gameMode.EvaluateThrow(playerId, currentScore, throwData);
+        var throwEvaluation = _gameMode.EvaluateThrow(
+            playerId,
+            playerScore,
+            throwData,
+            _scoreStates);
 
         // Update other player's score if needed.
         if (throwEvaluation.OtherUpdatedStates != null)
