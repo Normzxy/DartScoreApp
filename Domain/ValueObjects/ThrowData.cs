@@ -13,8 +13,10 @@ public sealed record ThrowData
     public ThrowData(int value, int multiplier)
     {
         if (multiplier is < 1 or > 3)
+        {
             throw new InvalidHitException("Multiplier must be 1, 2 or 3.");
-        
+        }
+
         switch (value)
         {
             case < 1 or > 20 when value != 25:

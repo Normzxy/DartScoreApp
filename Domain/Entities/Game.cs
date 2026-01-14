@@ -47,8 +47,8 @@ public class Game
     public PlayerScore GetPlayerState(Guid playerId) =>
         _scoreStates.TryGetValue(playerId, out var state) ? state : throw new KeyNotFoundException();
 
-    public IReadOnlyDictionary<Guid, PlayerScore> GetAllPlayerStates() =>
-        _scoreStates;
+    public IReadOnlyDictionary<Guid, PlayerScore> GetAllPlayerStates()
+        => _scoreStates;
     
     public ThrowEvaluationResult RegisterThrow(Guid playerId, ThrowData throwData)
     {
@@ -74,14 +74,13 @@ public class Game
         // Score evaluation for a specific game mode, based on a throw info.
         var throwEvaluation = _gameMode.EvaluateThrow(
             playerId,
-            playerScore,
             throwData,
             _scoreStates);
 
         // Update other player's score if needed.
-        if (throwEvaluation.OtherUpdatedStates != null)
+        if (throwEvaluation.OtherUpdatedScores != null)
         {
-            foreach (var kv in throwEvaluation.OtherUpdatedStates)
+            foreach (var kv in throwEvaluation.OtherUpdatedScores)
             {
                 _scoreStates[kv.Key] = kv.Value;
             }
@@ -105,14 +104,16 @@ public class Game
                 _scoreStates[playerId] = throwEvaluation.UpdatedScore;
                 _dartsThrown++;
                 if (_dartsThrown >= 3)
+                {
                     EndTurn();
+                }
                 return throwEvaluation;
 
             default:
                 throw new InvalidOperationException("Unsupported ThrowOutcome.");
         }
     }
-    
+
     private void EndTurn()
     {
         _dartsThrown = 0;

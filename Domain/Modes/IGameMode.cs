@@ -15,7 +15,6 @@ public interface IGameMode
     /// </summary>
     ThrowEvaluationResult EvaluateThrow(
         Guid playerId,
-        PlayerScore playerScore,
         ThrowData throwData,
         IReadOnlyDictionary<Guid, PlayerScore> allPlayerScores);
 }

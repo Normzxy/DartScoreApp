@@ -16,7 +16,7 @@ public sealed record ThrowEvaluationResult
     public ThrowOutcome Outcome { get; private init; }
     public PlayerScore UpdatedScore { get; private init; } = null!;
     // Optional, because those are edited only in specific situations.
-    public IReadOnlyDictionary<Guid, PlayerScore>? OtherUpdatedStates { get; init; }
+    public IReadOnlyDictionary<Guid, PlayerScore>? OtherUpdatedScores { get; init; }
 
     // Game uses internal snapshot to restore player's score,
     // so there's no need to return UpdatedScore.
@@ -28,17 +28,21 @@ public sealed record ThrowEvaluationResult
 
     public static ThrowEvaluationResult Continue(
         PlayerScore updatedScore,
-        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null) => new()
+        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null)
+        => new()
     {
         Outcome = ThrowOutcome.Continue, 
         UpdatedScore = updatedScore, 
-        OtherUpdatedStates = othersScore
+        OtherUpdatedScores = othersScore
     };
 
     public static ThrowEvaluationResult Win(
-        PlayerScore finalState) => new()
+        PlayerScore finalState,
+        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null)
+        => new()
     { 
         Outcome = ThrowOutcome.Win,
-        UpdatedScore = finalState
+        UpdatedScore = finalState,
+        OtherUpdatedScores = othersScore
     };
 }
