@@ -8,15 +8,15 @@ public abstract record PlayerScore
     public Guid PlayerId { get; init; }
 }
 
-public sealed record ClassicSetsPlayerScore : PlayerScore
+public sealed record ClassicSetsScore : PlayerScore
 {
     public int RemainingInLeg { get; init; }
     public int LegsWonInSet { get; init; }
     public int SetsWonInMatch { get; init; }
 }
 
-public sealed record ClassicPlayerScore : PlayerScore
+public sealed record ClassicLegsScore : PlayerScore
 {
     public int RemainingInLeg { get; init; }
-    public int LegsWonInSet { get; init; }
+    public int LegsWonInMatch { get; init; }
 }

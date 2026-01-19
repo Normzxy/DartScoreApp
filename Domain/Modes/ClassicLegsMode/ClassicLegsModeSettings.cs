@@ -1,20 +1,20 @@
-﻿namespace Domain.Modes.ClassicMode;
+﻿namespace Domain.Modes.ClassicLegsMode;
 
-public class ClassicModeSettings
+public class ClassicLegsModeSettings
 {
     public int ScorePerLeg { get; }
     public int LegsToWinMatch { get; }
     public bool DoubleOutEnabled { get; }
-    public bool SuddenDeathEnabled { get; }
+    public bool AdvantagesEnabled { get; }
     public int? SuddenDeathWinningLeg { get; }
 
-    private static readonly int[] AllowedStartingScores = { 201, 301, 401, 501, 601, 701, 1001};
+    private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
 
-    public ClassicModeSettings(
+    public ClassicLegsModeSettings(
         int scorePerLeg = 501,
         int legsToWinMatch = 3,
         bool doubleOutEnabled = false,
-        bool suddenDeathEnabled = false,
+        bool advantagesEnabled = false,
         int? suddenDeathWinningLeg = null)
     {
         if (!AllowedStartingScores.Contains(scorePerLeg))
@@ -33,9 +33,9 @@ public class ClassicModeSettings
                 "Number of legs required to win a match must be between 1 and 18 (inclusive).");
         }
 
-        var effectiveSuddenDeathEnabled = legsToWinMatch > 1 && suddenDeathEnabled;
+        var effectiveAdvantagesEnabled = legsToWinMatch > 1 && advantagesEnabled;
 
-        if (effectiveSuddenDeathEnabled)
+        if (effectiveAdvantagesEnabled)
         {
             suddenDeathWinningLeg ??= legsToWinMatch + 2;
             
@@ -55,7 +55,7 @@ public class ClassicModeSettings
         ScorePerLeg = scorePerLeg;
         LegsToWinMatch = legsToWinMatch;
         DoubleOutEnabled = doubleOutEnabled;
-        SuddenDeathEnabled = effectiveSuddenDeathEnabled;
+        AdvantagesEnabled = effectiveAdvantagesEnabled;
         SuddenDeathWinningLeg = suddenDeathWinningLeg;
     }
 }

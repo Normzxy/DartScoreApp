@@ -34,11 +34,6 @@ public class Game
         _players.AddRange(players);
         _gameMode.ValidatePlayers(_players);
 
-        if (players.Count is < 1 or > 2)
-        {
-            throw new ArgumentException("Game supports 1–2 players.");
-        }
-
         foreach (var player in _players)
         {
             _scoreStates[player.Id] = _gameMode.CreateInitialScore(player.Id);

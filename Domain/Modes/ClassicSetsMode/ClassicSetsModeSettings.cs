@@ -6,17 +6,17 @@ public sealed class ClassicSetsModeSettings
     public int LegsToWinSet { get; }
     public int SetsToWinMatch { get; }
     public bool DoubleOutEnabled { get; }
-    public bool SuddenDeathEnabled { get; }
+    public bool AdvantagesEnabled { get; }
     public int? SuddenDeathWinningLeg { get; }
 
-    private static readonly int[] AllowedStartingScores = { 201, 301, 401, 501, 701 };
+    private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
 
     public ClassicSetsModeSettings(
         int scorePerLeg = 501,
         int legsToWinSet = 3,
         int setsToWinMatch = 3,
         bool doubleOutEnabled = false,
-        bool suddenDeathEnabled = false,
+        bool advantagesEnabled = false,
         int? suddenDeathWinningLeg = null)
     {
         if (!AllowedStartingScores.Contains(scorePerLeg))
@@ -43,7 +43,7 @@ public sealed class ClassicSetsModeSettings
                 "Number of legs required to win a set must be between 2 and 4 (inclusive).");
         }
 
-        if (suddenDeathEnabled)
+        if (advantagesEnabled)
         {
             suddenDeathWinningLeg ??= legsToWinSet + 2;
 
@@ -64,7 +64,7 @@ public sealed class ClassicSetsModeSettings
         LegsToWinSet = legsToWinSet;
         SetsToWinMatch = setsToWinMatch;
         DoubleOutEnabled = doubleOutEnabled;
-        SuddenDeathEnabled = suddenDeathEnabled;
+        AdvantagesEnabled = advantagesEnabled;
         SuddenDeathWinningLeg = suddenDeathWinningLeg;
     }
 }

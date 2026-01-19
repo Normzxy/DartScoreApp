@@ -1,28 +1,27 @@
 ﻿using Domain.Entities;
 using Domain.ValueObjects;
 
-namespace Domain.Modes.ClassicSetsMode;
+namespace Domain.Modes.ClassicLegsMode;
 
-public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
+public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
 {
-    private readonly ClassicSetsModeSettings _modeSettings
+    private readonly ClassicLegsModeSettings _modeSettings
         = modeSettings ?? throw new ArgumentNullException(nameof(modeSettings));
 
     public PlayerScore CreateInitialScore(Guid playerId)
-        => new ClassicSetsScore 
+        => new ClassicLegsScore
         {
             PlayerId = playerId,
             RemainingInLeg = _modeSettings.ScorePerLeg,
-            LegsWonInSet = 0,
-            SetsWonInMatch = 0
+            LegsWonInMatch = 0
         };
 
     public void ValidatePlayers(IReadOnlyCollection<Player> players)
     {
         if (players.Count != 2)
-        { 
+        {
             throw new InvalidOperationException(
-                "Classic Sets mode requires exactly two players.");
+                "Classic Legs mode requires exactly two players.");
         }
     }
 
@@ -37,34 +36,30 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
     {
         ArgumentNullException.ThrowIfNull(allPlayerScores);
 
-        // Throws InvalidOperationException if more than one oponent is present.
         var playerEntry = allPlayerScores.Single(kv => kv.Key == playerId);
         var opponentEntry = allPlayerScores.Single(kv => kv.Key != playerId);
 
-        if (opponentEntry.Value is not ClassicSetsScore opponentScore)
+        if (opponentEntry.Value is not ClassicLegsScore opponentScore)
         {
-            throw new InvalidOperationException("No opponent's score data.");
+            throw new InvalidOperationException("Unexpected opponent's score data.");
         }
 
-        if (playerEntry.Value is not ClassicSetsScore playerScore)
+        if (playerEntry.Value is not ClassicLegsScore playerScore)
         {
-            throw new InvalidOperationException("No current player's score data.");
+            throw new InvalidOperationException("Unexpected current player's score data.");
         }
 
         // Opponent's score data.
         var opponentId = opponentScore.PlayerId;
         var opponentRemaining = opponentScore.RemainingInLeg;
-        var opponentLegsWon = opponentScore.LegsWonInSet;
-        var opponentSetsWon = opponentScore.SetsWonInMatch;
+        var opponentLegsWon = opponentScore.LegsWonInMatch;
 
         // Current player's score data.
         var currentRemaining = playerScore.RemainingInLeg;
-        var currentLegsWon = playerScore.LegsWonInSet;
-        var currentSetsWon = playerScore.SetsWonInMatch;
+        var currentLegsWon = playerScore.LegsWonInMatch;
 
         // FLags to evaluate required Game state changes.
         var legWon = false;
-        var setWon = false;
         var gameWon = false;
 
         var afterThrow = currentRemaining - throwData.Score;
@@ -89,40 +84,14 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
             currentRemaining = _modeSettings.ScorePerLeg;
             currentLegsWon++;
 
-            // Special case of sudden death.
-            if (IsDecider(currentSetsWon, opponentSetsWon))
-            {
-                if (IsDeciderWon(currentLegsWon, opponentLegsWon))
-                {
-                    setWon = true;
-                    currentLegsWon = 0;
-                    currentSetsWon++;
-                    gameWon = true;
-                }
-            }
-            // Normal course of the game.
-            else
-            {
-                if (IsSetWon(currentLegsWon))
-                {
-                    setWon = true;
-                    currentLegsWon = 0;
-                    currentSetsWon++;
-
-                    if (IsGameWon(currentSetsWon))
-                    {
-                        gameWon = true;
-                    }
-                }
-            }
+            gameWon = _modeSettings.AdvantagesEnabled ? IsGameWonAdvantage(currentLegsWon, opponentLegsWon)
+                : IsGameWon(currentLegsWon);
         }
 
-        // New state of a current player.
         var updatedScore = playerScore with 
         {
             RemainingInLeg = currentRemaining, 
-            LegsWonInSet = currentLegsWon, 
-            SetsWonInMatch = currentSetsWon
+            LegsWonInMatch = currentLegsWon
         };
 
         // Other players score handling.
@@ -138,8 +107,7 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
         var updatedOpponent = opponentScore with
         {
             RemainingInLeg = gameWon ? opponentRemaining : _modeSettings.ScorePerLeg,
-            LegsWonInSet = gameWon ? opponentLegsWon : setWon ? 0 : opponentLegsWon,
-            SetsWonInMatch = opponentSetsWon
+            LegsWonInMatch = opponentLegsWon
         };
 
         opponentUpdatedScore[opponentId] = updatedOpponent;
@@ -150,7 +118,6 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
         }
 
         return gameWon ? ThrowEvaluationResult.Win(updatedScore, opponentUpdatedScore)
-            : setWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.SetWon)
             : legWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.LegWon)
             : ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore);
     }
@@ -164,7 +131,7 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
         {
             return afterThrow < 0;
         }
-        
+
         return afterThrow is < 0 or 1;
     }
 
@@ -175,31 +142,18 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
     {
         return !_modeSettings.DoubleOutEnabled || throwData.Multiplier is 2;
     }
+    
+    private bool IsGameWon(int currentLegsWon)
+    {
+        return currentLegsWon >= _modeSettings.LegsToWinMatch;
+    }
 
     /// <summary>
-    /// Checks for decider (both player are one set from winning a game).
-    /// In decider player must win by 2 legs or reach specified number of legs (sudden death).
+    /// Game must be won by two legs of advantage until the limit of legs is reached (sudden dath).
     /// </summary>
-    private bool IsDecider(int currentSetsWon, int opponentSetsWon)
+    private bool IsGameWonAdvantage(int currentLegsWon, int opponentLegsWon)
     {
-        return _modeSettings.AdvantagesEnabled
-               && currentSetsWon == _modeSettings.SetsToWinMatch - 1
-               && opponentSetsWon == _modeSettings.SetsToWinMatch - 1;
-    }
-
-    private bool IsDeciderWon(int currentLegsWon, int opponentLegsWon)
-    {
-        return (currentLegsWon >= _modeSettings.LegsToWinSet && currentLegsWon >= opponentLegsWon + 2)
+        return (currentLegsWon >= _modeSettings.LegsToWinMatch && currentLegsWon >= opponentLegsWon + 2)
                || currentLegsWon >= _modeSettings.SuddenDeathWinningLeg;
-    }
-
-    private bool IsSetWon(int currentLegsWon)
-    {
-        return currentLegsWon >= _modeSettings.LegsToWinSet;
-    }
-
-    private bool IsGameWon(int currentSetsWon)
-    {
-        return currentSetsWon >= _modeSettings.SetsToWinMatch;
     }
 }
