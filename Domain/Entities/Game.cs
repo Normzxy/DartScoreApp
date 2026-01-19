@@ -1,4 +1,5 @@
-﻿using Domain.Modes;
+﻿using System.Net;
+using Domain.Modes;
 using Domain.ValueObjects;
 
 namespace Domain.Entities;
@@ -13,16 +14,18 @@ public class Game
     private readonly List<Player> _players = new();
     private readonly Dictionary<Guid, PlayerScore> _scoreStates = new();
     private readonly List<Throw> _history = new();
-
-    private PlayerScore? _turnSnapshot = null;
-    private int _currentPlayerIdx = 0;
-    private int _dartsThrown = 0;
+    private PlayerScore? _turnSnapshot;
+    private bool IsGameFinished { get; set; }
+    private int _dartsThrown;
+    private int _currentPlayerIdx;
+    private int _legStartingPlayerIdx;
+    private int _setStartingPlayerIdx;
 
     public Guid Id { get; } = Guid.NewGuid();
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
+    public IReadOnlyDictionary<Guid, PlayerScore> ScoreStates => _scoreStates;
     public IReadOnlyList<Throw> History => _history.AsReadOnly();
-    public bool IsGameFinished { get; private set; } = false;
-    public Guid? WinnerId { get; private set; } = null;
+    public Guid? WinnerId { get; private set; }
 
     public Game(IGameMode gameMode, List<Player> players)
     {
@@ -40,31 +43,40 @@ public class Game
         {
             _scoreStates[player.Id] = _gameMode.CreateInitialScore(player.Id);
         }
+        
+        _dartsThrown = 0;
+        _currentPlayerIdx = 0;
+        _legStartingPlayerIdx = 0;
+        _setStartingPlayerIdx = 0;
     }
 
     private Player CurrentPlayer => _players[_currentPlayerIdx];
-    
+
     public PlayerScore GetPlayerState(Guid playerId) =>
         _scoreStates.TryGetValue(playerId, out var state) ? state : throw new KeyNotFoundException();
 
     public IReadOnlyDictionary<Guid, PlayerScore> GetAllPlayerStates()
         => _scoreStates;
-    
+
     public ThrowEvaluationResult RegisterThrow(Guid playerId, ThrowData throwData)
     {
-        if (IsGameFinished) throw new InvalidOperationException("Game already finished.");
+        if (IsGameFinished)
+        {
+            throw new InvalidOperationException("Game already finished.");
+        }
+
         if (playerId != CurrentPlayer.Id)
         {
             throw new InvalidOperationException("Not this player's turn.");
         }
         ArgumentNullException.ThrowIfNull(throwData);
-        
+
         // Scores snapshot before editing.
         if (_dartsThrown == 0)
-        {
-            _turnSnapshot = _scoreStates[playerId];
+        { 
+            _turnSnapshot= _scoreStates[playerId];
         }
-        
+
         var playerScore = _scoreStates[playerId];
         
         // Save throw data with aditional idenitifiers.
@@ -95,14 +107,29 @@ public class Game
                 return throwEvaluation;
 
             case ThrowOutcome.Win:
-                _scoreStates[playerId] = throwEvaluation.UpdatedScore;
+                _scoreStates[playerId] = throwEvaluation.UpdatedScore!;
                 IsGameFinished = true;
                 WinnerId = playerId;
                 return throwEvaluation;
 
             case ThrowOutcome.Continue:
-                _scoreStates[playerId] = throwEvaluation.UpdatedScore;
+                _scoreStates[playerId] = throwEvaluation.UpdatedScore!;
                 _dartsThrown++;
+                
+                switch (throwEvaluation.Proggress)
+                {
+                    case ProggressInfo.LegWon:
+                        EndLeg();
+                        return throwEvaluation;
+                    case ProggressInfo.SetWon:
+                        EndSet();
+                        return throwEvaluation;
+                    case ProggressInfo.None:
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported ProgressInfo.");
+                }
+
                 if (_dartsThrown >= 3)
                 {
                     EndTurn();
@@ -116,8 +143,25 @@ public class Game
 
     private void EndTurn()
     {
+        _currentPlayerIdx = (_currentPlayerIdx + 1) % _players.Count;
         _dartsThrown = 0;
         _turnSnapshot = null;
-        _currentPlayerIdx = (_currentPlayerIdx + 1) % _players.Count;
+    }
+
+    private void EndLeg()
+    {
+        _legStartingPlayerIdx = (_legStartingPlayerIdx + 1) % _players.Count;
+        _currentPlayerIdx = _legStartingPlayerIdx;
+        _dartsThrown = 0;
+        _turnSnapshot = null;
+    }
+
+    private void EndSet()
+    {
+        _setStartingPlayerIdx = (_setStartingPlayerIdx + 1) % _players.Count;
+        _legStartingPlayerIdx = _setStartingPlayerIdx;
+        _currentPlayerIdx = _legStartingPlayerIdx;
+        _dartsThrown = 0;
+        _turnSnapshot = null;
     }
 }

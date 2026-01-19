@@ -1,6 +1,6 @@
 ﻿namespace Domain.Modes.ClassicSetsMode;
 
-public sealed class ClassicSetsSettings
+public sealed class ClassicSetsModeSettings
 {
     public int StartingScorePerLeg { get; }
     public int LegsToWinSet { get; }
@@ -8,10 +8,10 @@ public sealed class ClassicSetsSettings
     public bool DoubleOutEnabled { get; }
     public bool SuddenDeathEnabled { get; }
     public int SuddenDeathWinningLeg { get; }
-    
+
     private static readonly int[] AllowedStartingScores = { 201, 301, 401, 501, 601, 701 };
 
-    public ClassicSetsSettings(
+    public ClassicSetsModeSettings(
         int startingScorePerLeg = 501,
         int setsToWinMatch = 3,
         bool doubleOutEnabled = false,
@@ -27,6 +27,14 @@ public sealed class ClassicSetsSettings
                 nameof(setsToWinMatch),
                 setsToWinMatch,
                 "SetsToWinMatch must be between 3 and 7 (inclusive).");
+
+        if (suddenDeathWinningLeg < LegsToWinSet)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(suddenDeathWinningLeg),
+                suddenDeathWinningLeg,
+                "Sudden death winning leg cannot be les than deafult legs to win a signle set.");
+        }
 
         StartingScorePerLeg = startingScorePerLeg;
         LegsToWinSet = 3;

@@ -19,7 +19,7 @@ public sealed record ThrowData
 
         switch (value)
         {
-            case < 1 or > 20 when value != 25:
+            case < 0 or > 20 when value != 25:
                 throw new InvalidHitException("Value must be 1..20 or 25 (bull).");
             case 25 when multiplier is not (1 or 2):
                 throw new InvalidHitException("Invalid bull multiplier.");

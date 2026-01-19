@@ -14,3 +14,9 @@ public sealed record ClassicSetsPlayerScore : PlayerScore
     public int LegsWonInSet { get; init; }
     public int SetsWonInMatch { get; init; }
 }
+
+public sealed record ClassicPlayerScore : PlayerScore
+{
+    public int RemainingInLeg { get; init; }
+    public int LegsWonInSet { get; init; }
+}

@@ -3,15 +3,15 @@ using Domain.ValueObjects;
 
 namespace Domain.Modes.ClassicSetsMode;
 
-public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
+public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
 {
-    private readonly ClassicSetsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly ClassicSetsModeSettings _modeSettings = modeSettings ?? throw new ArgumentNullException(nameof(modeSettings));
 
     public PlayerScore CreateInitialScore(Guid playerId) => 
         new ClassicSetsPlayerScore
         {
             PlayerId = playerId,
-            RemainingInLeg = _settings.StartingScorePerLeg,
+            RemainingInLeg = _modeSettings.StartingScorePerLeg,
             LegsWonInSet = 0,
             SetsWonInMatch = 0
         };
@@ -47,7 +47,7 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
         {
             throw new InvalidOperationException("No score data for opponent player.");
         }
-        
+
         if (playerEntry.Value is not ClassicSetsPlayerScore playerScore)
         {
             throw new InvalidOperationException("No score data for opponent player.");
@@ -88,7 +88,7 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
             }
 
             legWon = true;
-            currentRemaining = _settings.StartingScorePerLeg;
+            currentRemaining = _modeSettings.StartingScorePerLeg;
             currentLegsWon++;
 
             // Special case of sudden death.
@@ -135,10 +135,10 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
 
         // If leg won, there's need to change opponent's state.
         var opponentUpdatedScore = new Dictionary<Guid, PlayerScore>();
-        
+
         var updatedOther = opponentScore with
         {
-            RemainingInLeg = gameWon ? opponentRemaining : _settings.StartingScorePerLeg,
+            RemainingInLeg = gameWon ? opponentRemaining : _modeSettings.StartingScorePerLeg,
             LegsWonInSet = gameWon ? opponentLegsWon : setWon ? 0 : opponentLegsWon,
             SetsWonInMatch = opponentSetsWon
         };
@@ -150,7 +150,10 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
             opponentUpdatedScore = null;
         }
 
-        return gameWon ? ThrowEvaluationResult.Win(updatedScore, opponentUpdatedScore) : ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore);
+        return gameWon ? ThrowEvaluationResult.Win(updatedScore, opponentUpdatedScore)
+            : setWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.SetWon)
+            : legWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.LegWon)
+            : ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore);
     }
 
     /// <summary>
@@ -158,7 +161,7 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
     /// </summary>
     private bool IsBust(int afterThrow)
     {
-        if (!_settings.DoubleOutEnabled)
+        if (!_modeSettings.DoubleOutEnabled)
         {
             return afterThrow < 0;
         }
@@ -171,7 +174,7 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
     /// </summary>
     private bool IsLegWon(ThrowData throwData)
     {
-        return !_settings.DoubleOutEnabled || throwData.Multiplier is 2;
+        return !_modeSettings.DoubleOutEnabled || throwData.Multiplier is 2;
     }
     
     /// <summary>
@@ -181,9 +184,9 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
     /// </summary>
     private bool IsDecider(int currentSetsWon, int opponentSetsWon)
     {
-        return _settings.SuddenDeathEnabled 
-               && currentSetsWon == _settings.SetsToWinMatch - 1
-               && opponentSetsWon == _settings.SetsToWinMatch - 1;
+        return _modeSettings.SuddenDeathEnabled 
+               && currentSetsWon == _modeSettings.SetsToWinMatch - 1
+               && opponentSetsWon == _modeSettings.SetsToWinMatch - 1;
     }
 
     /// <summary>
@@ -191,17 +194,17 @@ public class ClassicSetsMode(ClassicSetsSettings settings) : IGameMode
     /// </summary>
     private bool IsSetWon(int currentLegsWon)
     {
-        return currentLegsWon >= _settings.LegsToWinSet;
+        return currentLegsWon >= _modeSettings.LegsToWinSet;
     }
 
     private bool IsGameWon(int currentSetsWon)
     {
-        return currentSetsWon >= _settings.SetsToWinMatch;
+        return currentSetsWon >= _modeSettings.SetsToWinMatch;
     }
 
     private bool IsDeciderWon(int currentLegsWon, int opponentLegsWon)
     {
-        return (currentLegsWon >= _settings.LegsToWinSet && currentLegsWon >= opponentLegsWon + 2)
-               || currentLegsWon == _settings.SuddenDeathWinningLeg;
+        return (currentLegsWon >= _modeSettings.LegsToWinSet && currentLegsWon >= opponentLegsWon + 2)
+               || currentLegsWon == _modeSettings.SuddenDeathWinningLeg;
     }
 }
