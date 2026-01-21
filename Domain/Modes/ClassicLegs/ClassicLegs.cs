@@ -1,18 +1,18 @@
 ﻿using Domain.Entities;
 using Domain.ValueObjects;
 
-namespace Domain.Modes.ClassicLegsMode;
+namespace Domain.Modes.ClassicLegs;
 
-public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
+public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
 {
-    private readonly ClassicLegsModeSettings _modeSettings
-        = modeSettings ?? throw new ArgumentNullException(nameof(modeSettings));
+    private readonly ClassicLegsSettings _settings
+        = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new ClassicLegsScore
         {
             PlayerId = playerId,
-            RemainingInLeg = _modeSettings.ScorePerLeg,
+            RemainingInLeg = _settings.ScorePerLeg,
             LegsWonInMatch = 0
         };
 
@@ -81,10 +81,10 @@ public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
             }
 
             legWon = true;
-            currentRemaining = _modeSettings.ScorePerLeg;
+            currentRemaining = _settings.ScorePerLeg;
             currentLegsWon++;
 
-            gameWon = _modeSettings.AdvantagesEnabled ? IsGameWonAdvantage(currentLegsWon, opponentLegsWon)
+            gameWon = _settings.AdvantagesEnabled ? IsGameWonAdvantage(currentLegsWon, opponentLegsWon)
                 : IsGameWon(currentLegsWon);
         }
 
@@ -106,16 +106,11 @@ public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
 
         var updatedOpponent = opponentScore with
         {
-            RemainingInLeg = gameWon ? opponentRemaining : _modeSettings.ScorePerLeg,
+            RemainingInLeg = gameWon ? opponentRemaining : _settings.ScorePerLeg,
             LegsWonInMatch = opponentLegsWon
         };
 
         opponentUpdatedScore[opponentId] = updatedOpponent;
-
-        if (opponentUpdatedScore.Count == 0)
-        {
-            opponentUpdatedScore = null;
-        }
 
         return gameWon ? ThrowEvaluationResult.Win(updatedScore, opponentUpdatedScore)
             : legWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.LegWon)
@@ -127,7 +122,7 @@ public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsBust(int afterThrow)
     {
-        if (!_modeSettings.DoubleOutEnabled)
+        if (!_settings.DoubleOutEnabled)
         {
             return afterThrow < 0;
         }
@@ -140,12 +135,12 @@ public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsLegWon(ThrowData throwData)
     {
-        return !_modeSettings.DoubleOutEnabled || throwData.Multiplier is 2;
+        return !_settings.DoubleOutEnabled || throwData.Multiplier is 2;
     }
     
     private bool IsGameWon(int currentLegsWon)
     {
-        return currentLegsWon >= _modeSettings.LegsToWinMatch;
+        return currentLegsWon >= _settings.LegsToWinMatch;
     }
 
     /// <summary>
@@ -153,7 +148,7 @@ public class ClassicLegsMode(ClassicLegsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsGameWonAdvantage(int currentLegsWon, int opponentLegsWon)
     {
-        return (currentLegsWon >= _modeSettings.LegsToWinMatch && currentLegsWon >= opponentLegsWon + 2)
-               || currentLegsWon >= _modeSettings.SuddenDeathWinningLeg;
+        return (currentLegsWon >= _settings.LegsToWinMatch && currentLegsWon >= opponentLegsWon + 2)
+               || currentLegsWon >= _settings.SuddenDeathWinningLeg;
     }
 }

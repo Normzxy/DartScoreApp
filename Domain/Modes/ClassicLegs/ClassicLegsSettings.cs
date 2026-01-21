@@ -1,6 +1,6 @@
-﻿namespace Domain.Modes.ClassicLegsMode;
+﻿namespace Domain.Modes.ClassicLegs;
 
-public class ClassicLegsModeSettings
+public class ClassicLegsSettings
 {
     public int ScorePerLeg { get; }
     public int LegsToWinMatch { get; }
@@ -10,7 +10,7 @@ public class ClassicLegsModeSettings
 
     private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
 
-    public ClassicLegsModeSettings(
+    public ClassicLegsSettings(
         int scorePerLeg = 501,
         int legsToWinMatch = 3,
         bool doubleOutEnabled = false,

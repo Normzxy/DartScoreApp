@@ -106,11 +106,17 @@ public class Game
                 IsGameFinished = true;
                 WinnerId = playerId;
                 return throwEvaluation;
+            
+            case ThrowOutcome.Tie:
+                _scoreStates[playerId] = throwEvaluation.UpdatedScore!;
+                IsGameFinished = true;
+                WinnerId = null;
+                return throwEvaluation;
 
             case ThrowOutcome.Continue:
                 _scoreStates[playerId] = throwEvaluation.UpdatedScore!;
                 _dartsThrown++;
-                
+
                 switch (throwEvaluation.Proggress)
                 {
                     case ProggressInfo.LegWon:

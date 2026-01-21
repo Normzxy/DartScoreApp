@@ -1,14 +1,14 @@
-﻿namespace Domain.Modes.FreeForAllMode;
+﻿namespace Domain.Modes.FreeForAll;
 
-public class FreeForAllModeSettings
+public class FreeForAllSettings
 {
     public int ScorePerLeg { get; }
     public int LegsToWinMatch { get; }
     public bool DoubleOutEnabled { get; }
 
-    private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
+    private static readonly int[] AllowedStartingScores = [ 201, 301, 401, 501, 601, 701, 801, 901 ];
 
-    public FreeForAllModeSettings(
+    public FreeForAllSettings(
         int scorePerLeg = 501,
         int legsToWinMatch = 3,
         bool doubleOutEnabled = false)

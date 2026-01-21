@@ -1,18 +1,18 @@
 ﻿using Domain.Entities;
 using Domain.ValueObjects;
 
-namespace Domain.Modes.ClassicSetsMode;
+namespace Domain.Modes.ClassicSets;
 
-public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
+public class ClassicSets(ClassicSetsSettings settings) : IGameMode
 {
-    private readonly ClassicSetsModeSettings _modeSettings
-        = modeSettings ?? throw new ArgumentNullException(nameof(modeSettings));
+    private readonly ClassicSetsSettings _settings
+        = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new ClassicSetsScore 
         {
             PlayerId = playerId,
-            RemainingInLeg = _modeSettings.ScorePerLeg,
+            RemainingInLeg = _settings.ScorePerLeg,
             LegsWonInSet = 0,
             SetsWonInMatch = 0
         };
@@ -86,7 +86,7 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
             }
 
             legWon = true;
-            currentRemaining = _modeSettings.ScorePerLeg;
+            currentRemaining = _settings.ScorePerLeg;
             currentLegsWon++;
 
             // Special case of sudden death.
@@ -137,17 +137,12 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
 
         var updatedOpponent = opponentScore with
         {
-            RemainingInLeg = gameWon ? opponentRemaining : _modeSettings.ScorePerLeg,
+            RemainingInLeg = gameWon ? opponentRemaining : _settings.ScorePerLeg,
             LegsWonInSet = gameWon ? opponentLegsWon : setWon ? 0 : opponentLegsWon,
             SetsWonInMatch = opponentSetsWon
         };
 
         opponentUpdatedScore[opponentId] = updatedOpponent;
-
-        if (opponentUpdatedScore.Count == 0)
-        {
-            opponentUpdatedScore = null;
-        }
 
         return gameWon ? ThrowEvaluationResult.Win(updatedScore, opponentUpdatedScore)
             : setWon ? ThrowEvaluationResult.Continue(updatedScore, opponentUpdatedScore, ProggressInfo.SetWon)
@@ -160,7 +155,7 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsBust(int afterThrow)
     {
-        if (!_modeSettings.DoubleOutEnabled)
+        if (!_settings.DoubleOutEnabled)
         {
             return afterThrow < 0;
         }
@@ -173,7 +168,7 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsLegWon(ThrowData throwData)
     {
-        return !_modeSettings.DoubleOutEnabled || throwData.Multiplier is 2;
+        return !_settings.DoubleOutEnabled || throwData.Multiplier is 2;
     }
 
     /// <summary>
@@ -182,24 +177,24 @@ public class ClassicSetsMode(ClassicSetsModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsDecider(int currentSetsWon, int opponentSetsWon)
     {
-        return _modeSettings.AdvantagesEnabled
-               && currentSetsWon == _modeSettings.SetsToWinMatch - 1
-               && opponentSetsWon == _modeSettings.SetsToWinMatch - 1;
+        return _settings.AdvantagesEnabled
+               && currentSetsWon == _settings.SetsToWinMatch - 1
+               && opponentSetsWon == _settings.SetsToWinMatch - 1;
     }
 
     private bool IsDeciderWon(int currentLegsWon, int opponentLegsWon)
     {
-        return (currentLegsWon >= _modeSettings.LegsToWinSet && currentLegsWon >= opponentLegsWon + 2)
-               || currentLegsWon >= _modeSettings.SuddenDeathWinningLeg;
+        return (currentLegsWon >= _settings.LegsToWinSet && currentLegsWon >= opponentLegsWon + 2)
+               || currentLegsWon >= _settings.SuddenDeathWinningLeg;
     }
 
     private bool IsSetWon(int currentLegsWon)
     {
-        return currentLegsWon >= _modeSettings.LegsToWinSet;
+        return currentLegsWon >= _settings.LegsToWinSet;
     }
 
     private bool IsGameWon(int currentSetsWon)
     {
-        return currentSetsWon >= _modeSettings.SetsToWinMatch;
+        return currentSetsWon >= _settings.SetsToWinMatch;
     }
 }

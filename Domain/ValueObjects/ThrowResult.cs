@@ -5,7 +5,8 @@ public enum ThrowOutcome
 {
     Bust,
     Continue,
-    Win
+    Win,
+    Tie
 }
 
 public enum ProggressInfo
@@ -55,4 +56,14 @@ public sealed record ThrowEvaluationResult
         UpdatedScore = finalState,
         OtherUpdatedScores = othersScore
     };
+
+    public static ThrowEvaluationResult Tie(
+        PlayerScore finalState,
+        IReadOnlyDictionary<Guid, PlayerScore>? othersScore = null)
+        => new()
+        {
+            Outcome = ThrowOutcome.Tie,
+            UpdatedScore = finalState,
+            OtherUpdatedScores = othersScore
+        };
 }

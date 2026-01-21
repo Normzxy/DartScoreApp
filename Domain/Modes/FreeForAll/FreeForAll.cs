@@ -1,18 +1,18 @@
 ﻿using Domain.Entities;
 using Domain.ValueObjects;
 
-namespace Domain.Modes.FreeForAllMode;
+namespace Domain.Modes.FreeForAll;
 
-public class FreeForAllMode(FreeForAllModeSettings modeSettings) : IGameMode
+public class FreeForAll(FreeForAllSettings settings) : IGameMode
 {
-    private readonly FreeForAllModeSettings _modeSettings
-        = modeSettings ?? throw new ArgumentNullException(nameof(modeSettings));
+    private readonly FreeForAllSettings _settings
+        = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new ClassicLegsScore
         {
             PlayerId = playerId,
-            RemainingInLeg = _modeSettings.ScorePerLeg,
+            RemainingInLeg = _settings.ScorePerLeg,
             LegsWonInMatch = 0
         };
 
@@ -66,7 +66,7 @@ public class FreeForAllMode(FreeForAllModeSettings modeSettings) : IGameMode
             }
 
             legWon = true;
-            currentRemaining = _modeSettings.ScorePerLeg;
+            currentRemaining = _settings.ScorePerLeg;
             currentLegsWon++;
 
             gameWon = IsGameWon(currentLegsWon);
@@ -101,16 +101,11 @@ public class FreeForAllMode(FreeForAllModeSettings modeSettings) : IGameMode
 
             var updatedOther = otherScore with
             {
-                RemainingInLeg = gameWon ? otherScore.RemainingInLeg : _modeSettings.ScorePerLeg,
+                RemainingInLeg = gameWon ? otherScore.RemainingInLeg : _settings.ScorePerLeg,
                 LegsWonInMatch = otherScore.LegsWonInMatch
             };
 
             othersUpdatedScore[id] = updatedOther;
-        }
-
-        if (othersUpdatedScore.Count == 0)
-        {
-            othersUpdatedScore = null;
         }
 
         return gameWon ? ThrowEvaluationResult.Win(updatedScore, othersUpdatedScore)
@@ -123,7 +118,7 @@ public class FreeForAllMode(FreeForAllModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsBust(int afterThrow)
     {
-        if (!_modeSettings.DoubleOutEnabled)
+        if (!_settings.DoubleOutEnabled)
         {
             return afterThrow < 0;
         }
@@ -136,11 +131,11 @@ public class FreeForAllMode(FreeForAllModeSettings modeSettings) : IGameMode
     /// </summary>
     private bool IsLegWon(ThrowData throwData)
     {
-        return !_modeSettings.DoubleOutEnabled || throwData.Multiplier is 2;
+        return !_settings.DoubleOutEnabled || throwData.Multiplier is 2;
     }
 
     private bool IsGameWon(int currentLegsWon)
     {
-        return currentLegsWon >= _modeSettings.LegsToWinMatch;
+        return currentLegsWon >= _settings.LegsToWinMatch;
     }
 }

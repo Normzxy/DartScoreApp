@@ -20,3 +20,15 @@ public sealed record ClassicLegsScore : PlayerScore
     public int RemainingInLeg { get; init; }
     public int LegsWonInMatch { get; init; }
 }
+
+public sealed record CricketScore : PlayerScore
+{
+    public int Score { get; init; }
+    public int HitsOn15 { get; init; }
+    public int HitsOn16 { get; init; }
+    public int HitsOn17 { get; init; }
+    public int HitsOn18 { get; init; }
+    public int HitsOn19 { get; init; }
+    public int HitsOn20 { get; init; }
+    public int HitsOnBull { get; init; }
+}

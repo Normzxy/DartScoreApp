@@ -1,13 +1,13 @@
-﻿using Domain.Modes.ClassicSetsMode;
-using Domain.Modes;
+﻿using Domain.Modes;
 using Domain.ValueObjects;
 using Domain.Entities;
+using Domain.Modes.ClassicSets;
 
 namespace Domain.Tests
 {
-    public class ClassicSetsModeTests
+    public class ClassicSetsTests
     {
-        private static (Game game, ClassicSetsMode mode, Player p1, Player p2, ClassicSetsScore s1, ClassicSetsScore s2, Dictionary<Guid, PlayerScore> allScores)
+        private static (Game game, ClassicSets mode, Player p1, Player p2, ClassicSetsScore s1, ClassicSetsScore s2, Dictionary<Guid, PlayerScore> allScores)
             Setup
             (int scorePerLeg = 201,
             bool doubleOutEnabled = false,
@@ -15,7 +15,7 @@ namespace Domain.Tests
             int setsToWinMatch = 3,
             int suddenDeathWinningLeg = 6)
         {
-            var settings = new ClassicSetsModeSettings(
+            var settings = new ClassicSetsSettings(
                 scorePerLeg: scorePerLeg,
                 doubleOutEnabled: doubleOutEnabled,
                 advantagesEnabled: advantagesEnabled,
@@ -23,7 +23,7 @@ namespace Domain.Tests
                 suddenDeathWinningLeg: suddenDeathWinningLeg
             );
 
-            var mode = new ClassicSetsMode(settings);
+            var mode = new ClassicSets(settings);
 
             var p1 = new Player("P_1");
             var p2 = new Player("P_2");

@@ -1,6 +1,6 @@
-﻿namespace Domain.Modes.ClassicSetsMode;
+﻿namespace Domain.Modes.ClassicSets;
 
-public sealed class ClassicSetsModeSettings
+public sealed class ClassicSetsSettings
 {
     public int ScorePerLeg { get; }
     public int LegsToWinSet { get; }
@@ -9,9 +9,9 @@ public sealed class ClassicSetsModeSettings
     public bool AdvantagesEnabled { get; }
     public int? SuddenDeathWinningLeg { get; }
 
-    private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
+    private static readonly int[] AllowedStartingScores = [ 201, 301, 401, 501, 601, 701, 801, 901 ];
 
-    public ClassicSetsModeSettings(
+    public ClassicSetsSettings(
         int scorePerLeg = 501,
         int legsToWinSet = 3,
         int setsToWinMatch = 3,
