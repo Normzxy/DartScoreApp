@@ -37,22 +37,11 @@ public class ClassicSets(ClassicSetsSettings settings) : IGameMode
     {
         ArgumentNullException.ThrowIfNull(allPlayerScores);
 
-        // Throws InvalidOperationException if more than one oponent is present.
-        var playerEntry = allPlayerScores.Single(kv => kv.Key == playerId);
-        var opponentEntry = allPlayerScores.Single(kv => kv.Key != playerId);
-
-        if (opponentEntry.Value is not ClassicSetsScore opponentScore)
-        {
-            throw new InvalidOperationException("No opponent's score data.");
-        }
-
-        if (playerEntry.Value is not ClassicSetsScore playerScore)
-        {
-            throw new InvalidOperationException("No current player's score data.");
-        }
+        var playerScore = allPlayerScores[playerId].AsClassicSetsScore("current player's entry");
+        var opponentId = allPlayerScores.Single(kv => kv.Key != playerId).Key;
+        var opponentScore = allPlayerScores[opponentId].AsClassicSetsScore("opponent's entry");
 
         // Opponent's score data.
-        var opponentId = opponentScore.PlayerId;
         var opponentRemaining = opponentScore.RemainingInLeg;
         var opponentLegsWon = opponentScore.LegsWonInSet;
         var opponentSetsWon = opponentScore.SetsWonInMatch;

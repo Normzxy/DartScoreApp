@@ -27,7 +27,7 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
         if (players.Count is < 2 or > 4)
         {
             throw new ArgumentException(
-                "Free For All mode requires 2 - 4 players.");
+                "Cut-Throat Cricket mode requires 2 - 4 players.");
         }
     }
 
@@ -43,12 +43,7 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             throw new InvalidOperationException("There's no player scores.");
         }
 
-        var playerEntry = allPlayerScores.Single(kv => kv.Key == playerId);
-
-        if (playerEntry.Value is not CricketScore playerScore)
-        {
-            throw new InvalidOperationException("Unexpected current player's score data.");
-        }
+        var playerScore = allPlayerScores[playerId].AsCricketScore("current player's entry");
 
         if (!_settings.ScoringSectors.Contains(throwData.Value))
         {
@@ -78,47 +73,23 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             additionalHits = newHits;
         }
 
-        if (additionalHits is 0)
+        if (additionalHits is 0 && !AreAllSectorsClosed(updatedScore))
         {
-            if (!AreAllSectorsClosed(updatedScore))
-            {
-                return ThrowEvaluationResult.Continue(updatedScore);
-            }
+            return ThrowEvaluationResult.Continue(updatedScore);
         }
 
         // If additionalHits is 0 and ALL SECTORS ARE CLOSED:
-        // penaltyScore is 0 effectively, so no penalty and
-        // otherUpdatedScores is needed anyway (with unchanged state in this scenario), beacuse
-        // there's a need to evaluate if player's score is sufficient to win or tie the game,
+        // penaltyScore is 0 effectively (so no penalty) and
+        // otherUpdatedScores is needed anyway (with unchanged state)
+        // to evaluate if player's score is sufficient to win or tie the game,
         // based on the other players.
 
         // If penalty to apply, there's need to change opponent's state.
-        var otherUpdatedScores = new Dictionary<Guid, PlayerScore>();
-
         var penaltyScore = additionalHits * sector;
 
-        foreach (var (id, score) in allPlayerScores)
-        {
-            if (id == playerId)
-            {
-                continue;
-            }
-
-            if (score is not CricketScore otherScore)
-            {
-                throw new InvalidOperationException("Unexpected player's score data.");
-            }
-
-            var shouldPenaltyBeApplied = !IsSectorClosed(otherScore, sector);
-
-            var updatedOther = otherScore with
-            {
-                Score = shouldPenaltyBeApplied ? otherScore.Score + penaltyScore
-                    : otherScore.Score
-            };
-
-            otherUpdatedScores[id] = updatedOther;
-        }
+        var otherUpdatedScores
+            = ApplyPenaltiesToOpponents(
+                playerId, sector, penaltyScore, allPlayerScores);
 
         if (!AreAllSectorsClosed(updatedScore))
         {
@@ -126,6 +97,7 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
         }
 
         var bestClosures = GetLeadersWithAllClosedSectors(playerId, updatedScore, otherUpdatedScores);
+
         return IsGameWon(playerId, bestClosures) ? ThrowEvaluationResult.Win(updatedScore, otherUpdatedScores)
             : IsGameTied(playerId, bestClosures) ? ThrowEvaluationResult.Tie(updatedScore, otherUpdatedScores)
             : ThrowEvaluationResult.Continue(updatedScore, otherUpdatedScores);
@@ -142,20 +114,33 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             .All(sector => GetHitsForSector(score, sector) >= _settings.HitsToCloseSector);
     }
 
-    private static bool IsGameWon(
-        Guid playerId,
-        Dictionary<Guid, CricketScore> bestClosures)
+    private Dictionary<Guid, PlayerScore> ApplyPenaltiesToOpponents(
+        Guid currentPlayerId,
+        int sector,
+        int penaltyScore,
+        IReadOnlyDictionary<Guid, PlayerScore> allPlayerScores)
     {
-        return bestClosures.ContainsKey(playerId)
-               && bestClosures.Count == 1;
-    }
+        var updatedScores = new Dictionary<Guid, PlayerScore>();
 
-    private static bool IsGameTied(
-        Guid playerId,
-        Dictionary<Guid, CricketScore> bestClosures)
-    {
-        return bestClosures.ContainsKey(playerId)
-               && bestClosures.Count > 1;
+        foreach (var (id, score) in allPlayerScores)
+        {
+            if (id == currentPlayerId)
+            {
+                continue;
+            }
+
+            var cricketScore = score.AsCricketScore("opponent update");
+            var shouldApplyPenalty = !IsSectorClosed(cricketScore, sector);
+
+            updatedScores[id] = cricketScore with
+            {
+                Score = shouldApplyPenalty 
+                    ? cricketScore.Score + penaltyScore 
+                    : cricketScore.Score
+            };
+        }
+
+        return updatedScores;
     }
 
     /// <summary>
@@ -166,8 +151,9 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
         CricketScore playerScore,
         IReadOnlyDictionary<Guid, PlayerScore> otherScores)
     {
-        var cricketEntries = otherScores
-            .ToDictionary(kv => kv.Key, kv => (CricketScore)kv.Value);
+        var cricketEntries = otherScores.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.AsCricketScore("getting leaders"));
 
         cricketEntries[playerId] = playerScore;
 
@@ -205,4 +191,20 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             25 => score with { HitsOnBull = hits },
             _ => throw new InvalidOperationException("Unsupported sector: " + sector)
         };
+
+    private static bool IsGameWon(
+        Guid playerId,
+        Dictionary<Guid, CricketScore> bestClosures)
+    {
+        return bestClosures.ContainsKey(playerId)
+               && bestClosures.Count == 1;
+    }
+
+    private static bool IsGameTied(
+        Guid playerId,
+        Dictionary<Guid, CricketScore> bestClosures)
+    {
+        return bestClosures.ContainsKey(playerId)
+               && bestClosures.Count > 1;
+    }
 }

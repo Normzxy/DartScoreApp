@@ -36,21 +36,11 @@ public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
     {
         ArgumentNullException.ThrowIfNull(allPlayerScores);
 
-        var playerEntry = allPlayerScores.Single(kv => kv.Key == playerId);
-        var opponentEntry = allPlayerScores.Single(kv => kv.Key != playerId);
-
-        if (opponentEntry.Value is not ClassicLegsScore opponentScore)
-        {
-            throw new InvalidOperationException("Unexpected opponent's score data.");
-        }
-
-        if (playerEntry.Value is not ClassicLegsScore playerScore)
-        {
-            throw new InvalidOperationException("Unexpected current player's score data.");
-        }
+        var playerScore = allPlayerScores[playerId].AsClassicLegsScore("current player's entry");
+        var opponentId = allPlayerScores.Single(kv => kv.Key != playerId).Key;
+        var opponentScore = allPlayerScores[opponentId].AsClassicLegsScore("opponent's entry");
 
         // Opponent's score data.
-        var opponentId = opponentScore.PlayerId;
         var opponentRemaining = opponentScore.RemainingInLeg;
         var opponentLegsWon = opponentScore.LegsWonInMatch;
 

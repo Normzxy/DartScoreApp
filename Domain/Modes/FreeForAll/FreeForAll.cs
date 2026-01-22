@@ -32,23 +32,18 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
     {
         ArgumentNullException.ThrowIfNull(allPlayerScores);
 
-        var playerEntry = allPlayerScores.Single(kv => kv.Key == playerId);
+        var playerScore = allPlayerScores[playerId].AsClassicLegsScore("current player's entry");
 
-        if (playerEntry.Value is not ClassicLegsScore playerScore)
-        {
-            throw new InvalidOperationException("Unexpected current player's score data.");
-        }
-        
         // Current player's score data.
         var currentRemaining = playerScore.RemainingInLeg;
         var currentLegsWon = playerScore.LegsWonInMatch;
-        
+
         // FLags to evaluate required Game state changes.
         var legWon = false;
         var gameWon = false;
-        
+
         var afterThrow = currentRemaining - throwData.Score;
-        
+
         if (afterThrow != 0 && IsBust(afterThrow))
         {
             return ThrowEvaluationResult.Bust();
@@ -94,10 +89,7 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
                 continue;
             }
 
-            if (score is not ClassicLegsScore otherScore)
-            {
-                throw new InvalidOperationException("Unexpected player's score data.");
-            }
+            var otherScore = allPlayerScores[id].AsClassicLegsScore("opponent update");
 
             var updatedOther = otherScore with
             {

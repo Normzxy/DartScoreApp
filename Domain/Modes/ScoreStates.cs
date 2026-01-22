@@ -32,3 +32,27 @@ public sealed record CricketScore : PlayerScore
     public int HitsOn20 { get; init; }
     public int HitsOnBull { get; init; }
 }
+
+public static class PlayerScoreExtensions
+{
+    public static CricketScore AsCricketScore(this PlayerScore score, string context)
+    {
+        return score as CricketScore 
+               ?? throw new InvalidOperationException(
+                   $"Invalid score type: {score.GetType().Name} in {context}.");
+    }
+
+    public static ClassicSetsScore AsClassicSetsScore(this PlayerScore score, string context)
+    {
+        return score as ClassicSetsScore
+               ?? throw new InvalidOperationException(
+                   $"Invalid score type: {score.GetType().Name} in {context}.");
+    }
+
+    public static ClassicLegsScore AsClassicLegsScore(this PlayerScore score, string context)
+    {
+        return score as ClassicLegsScore
+               ?? throw new InvalidOperationException(
+                   $"Invalid score type: {score.GetType().Name} in {context}.");
+    }
+}
