@@ -1,12 +1,12 @@
-﻿namespace Domain.Modes.CutThroatCricket;
+﻿namespace Domain.Modes.ClassicCricket;
 
-public sealed class CutThroatCricketSettings
+public sealed class ClassicCricketSettings
 {
     public int HitsToCloseSector { get; }
     public bool CountMultipliers { get; }
     public IReadOnlyList<int> ScoringSectors { get; } = [ 15, 16, 17, 18, 19, 20, 25 ];
 
-    public CutThroatCricketSettings(
+    public ClassicCricketSettings(
         int hitsToCloseSector = 3,
         bool countMultipliers = true)
     {

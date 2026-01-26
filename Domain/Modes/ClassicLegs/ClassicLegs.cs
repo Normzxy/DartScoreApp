@@ -19,10 +19,8 @@ public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
     public void ValidatePlayers(IReadOnlyCollection<Player> players)
     {
         if (players.Count != 2)
-        {
             throw new InvalidOperationException(
                 "Classic Legs mode requires exactly two players.");
-        }
     }
 
     /// <summary>
@@ -55,20 +53,14 @@ public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
         var afterThrow = currentRemaining - throwData.Score;
 
         if (afterThrow != 0 && IsBust(afterThrow))
-        {
             return ThrowEvaluationResult.Bust();
-        }
 
         if (afterThrow is not 0)
-        {
             currentRemaining = afterThrow;
-        }
         else
         {
             if (!IsLegWon(throwData))
-            {
                 return ThrowEvaluationResult.Bust();
-            }
 
             legWon = true;
             currentRemaining = _settings.ScorePerLeg;
@@ -86,9 +78,7 @@ public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
 
         // Other players score handling.
         if (!legWon)
-        {
             return ThrowEvaluationResult.Continue(updatedScore);
-        }
 
         // If leg won, there's need to change opponent's state.
         // It's a dictionary, because Game agregate requires a Dictionary in general.
@@ -113,9 +103,7 @@ public class ClassicLegs(ClassicLegsSettings settings) : IGameMode
     private bool IsBust(int afterThrow)
     {
         if (!_settings.DoubleOutEnabled)
-        {
             return afterThrow < 0;
-        }
 
         return afterThrow is < 0 or 1;
     }

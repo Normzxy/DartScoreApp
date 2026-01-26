@@ -20,45 +20,35 @@ public sealed class ClassicSetsSettings
         int? suddenDeathWinningLeg = null)
     {
         if (!AllowedStartingScores.Contains(scorePerLeg))
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(scorePerLeg),
                 scorePerLeg,
                 $"Score per leg must be one of: {string.Join(", ", AllowedStartingScores)}.");
-        }
 
         if (setsToWinMatch is < 3 or > 7)
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(setsToWinMatch),
                 setsToWinMatch,
                 "Number of sets required to win the match must be between 3 and 7 (inclusive).");
-        }
 
         if (legsToWinSet is < 2 or > 4)
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(legsToWinSet),
                 legsToWinSet,
                 "Number of legs required to win a set must be between 2 and 4 (inclusive).");
-        }
 
         if (advantagesEnabled)
         {
             suddenDeathWinningLeg ??= legsToWinSet + 2;
 
             if (suddenDeathWinningLeg <= legsToWinSet)
-            {
                 throw new ArgumentOutOfRangeException(
                     nameof(suddenDeathWinningLeg),
                     suddenDeathWinningLeg,
                     "Sudden death winning leg must be greater than number of legs required to win a set.");
-            }
         }
         else
-        {
             suddenDeathWinningLeg = null;
-        }
 
         ScorePerLeg = scorePerLeg;
         LegsToWinSet = legsToWinSet;

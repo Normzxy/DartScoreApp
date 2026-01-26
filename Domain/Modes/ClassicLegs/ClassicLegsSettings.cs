@@ -18,20 +18,16 @@ public class ClassicLegsSettings
         int? suddenDeathWinningLeg = null)
     {
         if (!AllowedStartingScores.Contains(scorePerLeg))
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(scorePerLeg),
                 scorePerLeg,
                 $"Score per leg must be one of: {string.Join(", ", AllowedStartingScores)}.");
-        }
 
         if (legsToWinMatch is < 1 or > 18)
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(legsToWinMatch),
                 legsToWinMatch,
                 "Number of legs required to win a match must be between 1 and 18 (inclusive).");
-        }
 
         var effectiveAdvantagesEnabled = legsToWinMatch > 1 && advantagesEnabled;
 
@@ -40,17 +36,12 @@ public class ClassicLegsSettings
             suddenDeathWinningLeg ??= legsToWinMatch + 2;
             
             if (suddenDeathWinningLeg <= legsToWinMatch)
-            {
                 throw new ArgumentOutOfRangeException(
                     nameof(suddenDeathWinningLeg),
                     suddenDeathWinningLeg,
                     "Sudden death winning leg must be grater than number of legs to win the match.");
-            }
         }
-        else
-        {
-            suddenDeathWinningLeg = null;
-        }
+        else suddenDeathWinningLeg = null;
 
         ScorePerLeg = scorePerLeg;
         LegsToWinMatch = legsToWinMatch;

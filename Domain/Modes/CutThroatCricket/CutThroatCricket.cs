@@ -25,10 +25,8 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
     public void ValidatePlayers(IReadOnlyCollection<Player> players)
     {
         if (players.Count is < 2 or > 4)
-        {
             throw new ArgumentException(
                 "Cut-Throat Cricket mode requires 2 - 4 players.");
-        }
     }
 
     public ThrowEvaluationResult EvaluateThrow(
@@ -39,17 +37,13 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
         ArgumentNullException.ThrowIfNull(allPlayerScores);
 
         if (allPlayerScores.Count is 0)
-        {
             throw new InvalidOperationException("There's no player scores.");
-        }
 
         var playerScore = allPlayerScores[playerId].AsCricketScore("current player's entry");
 
+        // There is no bust in this mode.
         if (!_settings.ScoringSectors.Contains(throwData.Value))
-        {
             return ThrowEvaluationResult.Continue(playerScore);
-            // There is no bust in this mode.
-        }
 
         var sector = throwData.Value;
         var multiplier = throwData.Multiplier;
@@ -69,37 +63,30 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             updatedScore = SetHitsForSector(playerScore, sector, updatedSectorHits);
         }
         else
-        {
             additionalHits = newHits;
-        }
 
         if (additionalHits is 0 && !AreAllSectorsClosed(updatedScore))
-        {
             return ThrowEvaluationResult.Continue(updatedScore);
-        }
 
         // If additionalHits is 0 and ALL SECTORS ARE CLOSED:
         // penaltyScore is 0 effectively (so no penalty) and
         // otherUpdatedScores is needed anyway (with unchanged state)
-        // to evaluate if player's score is sufficient to win or tie the game,
+        // to evaluate if player's score is sufficient to win the game,
         // based on the other players.
 
         // If penalty to apply, there's need to change opponent's state.
         var penaltyScore = additionalHits * sector;
 
-        var otherUpdatedScores
-            = ApplyPenaltiesToOpponents(
+        var otherUpdatedScores = ApplyPenaltiesToOpponents(
                 playerId, sector, penaltyScore, allPlayerScores);
 
         if (!AreAllSectorsClosed(updatedScore))
-        {
             return ThrowEvaluationResult.Continue(updatedScore, otherUpdatedScores);
-        }
 
-        var bestClosures = GetLeadersWithAllClosedSectors(playerId, updatedScore, otherUpdatedScores);
-
-        return IsGameWon(playerId, bestClosures) ? ThrowEvaluationResult.Win(updatedScore, otherUpdatedScores)
-            : IsGameTied(playerId, bestClosures) ? ThrowEvaluationResult.Tie(updatedScore, otherUpdatedScores)
+        // Player closed all sectors - check if they win
+        // Win if: all sectors closed AND penalty <= all opponents' penalties
+        return IsOnLowestPenalty(updatedScore, otherUpdatedScores) 
+            ? ThrowEvaluationResult.Win(updatedScore, otherUpdatedScores)
             : ThrowEvaluationResult.Continue(updatedScore, otherUpdatedScores);
     }
 
@@ -125,9 +112,7 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
         foreach (var (id, score) in allPlayerScores)
         {
             if (id == currentPlayerId)
-            {
                 continue;
-            }
 
             var cricketScore = score.AsCricketScore("opponent update");
             var shouldApplyPenalty = !IsSectorClosed(cricketScore, sector);
@@ -144,26 +129,26 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
     }
 
     /// <summary>
-    /// Return dictionary of players who have the lowest penalty score with all sectors closed.
+    /// Player wins if they closed all sectors and have penalty score 
+    /// less than or equal to all opponents.
+    /// If equal penalty, the first to close all sectors wins.
     /// </summary>
-    private Dictionary<Guid, CricketScore> GetLeadersWithAllClosedSectors(
-        Guid playerId,
+    private static bool IsOnLowestPenalty(
         CricketScore playerScore,
         IReadOnlyDictionary<Guid, PlayerScore> otherScores)
     {
-        var cricketEntries = otherScores.ToDictionary(
-            kv => kv.Key,
-            kv => kv.Value.AsCricketScore("getting leaders"));
+        var playerPenalty = playerScore.Score;
 
-        cricketEntries[playerId] = playerScore;
+        // Check if player has lowest or equal penalty compared to all opponents
+        foreach (var (_, score) in otherScores)
+        {
+            var opponentScore = score.AsCricketScore("win evaluation");
 
-        var minPenalty = cricketEntries.Min(kv => kv.Value.Score);
+            if (playerPenalty > opponentScore.Score)
+                return false;
+        }
 
-        // Leaders with closed sectors.
-        return cricketEntries
-            .Where(kv => kv.Value.Score == minPenalty
-                         && AreAllSectorsClosed(kv.Value))
-            .ToDictionary(kv => kv.Key, kv => kv.Value);
+        return true;
     }
 
     private static int GetHitsForSector(CricketScore score, int sector)
@@ -191,20 +176,4 @@ public class CutThroatCricket(CutThroatCricketSettings settings) : IGameMode
             25 => score with { HitsOnBull = hits },
             _ => throw new InvalidOperationException("Unsupported sector: " + sector)
         };
-
-    private static bool IsGameWon(
-        Guid playerId,
-        Dictionary<Guid, CricketScore> bestClosures)
-    {
-        return bestClosures.ContainsKey(playerId)
-               && bestClosures.Count == 1;
-    }
-
-    private static bool IsGameTied(
-        Guid playerId,
-        Dictionary<Guid, CricketScore> bestClosures)
-    {
-        return bestClosures.ContainsKey(playerId)
-               && bestClosures.Count > 1;
-    }
 }

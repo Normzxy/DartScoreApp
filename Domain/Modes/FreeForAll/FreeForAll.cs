@@ -19,10 +19,8 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
     public void ValidatePlayers(IReadOnlyCollection<Player> players)
     {
         if (players.Count is < 2 or > 4)
-        {
             throw new ArgumentException(
                 "Free For All mode requires 2 - 4 players.");
-        }
     }
 
     public ThrowEvaluationResult EvaluateThrow(
@@ -45,20 +43,14 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
         var afterThrow = currentRemaining - throwData.Score;
 
         if (afterThrow != 0 && IsBust(afterThrow))
-        {
             return ThrowEvaluationResult.Bust();
-        }
 
         if (afterThrow is not 0)
-        {
             currentRemaining = afterThrow;
-        }
         else
         {
             if (!IsLegWon(throwData))
-            {
                 return ThrowEvaluationResult.Bust();
-            }
 
             legWon = true;
             currentRemaining = _settings.ScorePerLeg;
@@ -75,9 +67,7 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
 
         // Other players score handling.
         if (!legWon)
-        {
             return ThrowEvaluationResult.Continue(updatedScore);
-        }
 
         // If leg won, there's need to change opponent's state.
         var othersUpdatedScore = new Dictionary<Guid, PlayerScore>();
@@ -85,9 +75,7 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
         foreach (var (id, score) in allPlayerScores)
         {
             if (id == playerId)
-            {
                 continue;
-            }
 
             var otherScore = allPlayerScores[id].AsClassicLegsScore("opponent update");
 
@@ -111,9 +99,7 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
     private bool IsBust(int afterThrow)
     {
         if (!_settings.DoubleOutEnabled)
-        {
             return afterThrow < 0;
-        }
 
         return afterThrow is < 0 or 1;
     }
