@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Interfaces;
 using Domain.ValueObjects;
 
 namespace Domain.Modes.ClassicSets;
@@ -7,6 +8,7 @@ public class ClassicSets(ClassicSetsSettings settings) : IGameMode
 {
     private readonly ClassicSetsSettings _settings
         = settings ?? throw new ArgumentNullException(nameof(settings));
+    public int DartsPerTurn => _settings.DartsPerTurn;
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new ClassicSetsScore 

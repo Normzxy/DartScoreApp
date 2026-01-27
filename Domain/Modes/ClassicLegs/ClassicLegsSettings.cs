@@ -2,6 +2,7 @@
 
 public class ClassicLegsSettings
 {
+    public int DartsPerTurn { get; }
     public int ScorePerLeg { get; }
     public int LegsToWinMatch { get; }
     public bool DoubleOutEnabled { get; }
@@ -11,12 +12,16 @@ public class ClassicLegsSettings
     private static readonly int[] AllowedStartingScores = [201, 301, 401, 501, 601, 701, 801, 901];
 
     public ClassicLegsSettings(
+        int dartsPerTurn = 3,
         int scorePerLeg = 501,
         int legsToWinMatch = 3,
         bool doubleOutEnabled = false,
         bool advantagesEnabled = false,
         int? suddenDeathWinningLeg = null)
     {
+        if (dartsPerTurn is not 3)
+            throw new ArgumentOutOfRangeException(nameof(dartsPerTurn));
+
         if (!AllowedStartingScores.Contains(scorePerLeg))
             throw new ArgumentOutOfRangeException(
                 nameof(scorePerLeg),
@@ -43,6 +48,7 @@ public class ClassicLegsSettings
         }
         else suddenDeathWinningLeg = null;
 
+        DartsPerTurn = dartsPerTurn;
         ScorePerLeg = scorePerLeg;
         LegsToWinMatch = legsToWinMatch;
         DoubleOutEnabled = doubleOutEnabled;

@@ -1,4 +1,5 @@
-﻿using Domain.Modes;
+﻿using Domain.Interfaces;
+using Domain.Modes;
 using Domain.ValueObjects;
 
 namespace Domain.Entities;
@@ -114,7 +115,7 @@ public class Game
                         throw new InvalidOperationException("Unsupported ProgressInfo.");
                 }
 
-                if (_dartsThrown >= 3)
+                if (_dartsThrown >= _gameMode.DartsPerTurn)
                     EndTurn();
 
                 return throwEvaluation;

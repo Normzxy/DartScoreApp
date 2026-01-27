@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Interfaces;
 using Domain.ValueObjects;
 
 namespace Domain.Modes.FreeForAll;
@@ -7,6 +8,7 @@ public class FreeForAll(FreeForAllSettings settings) : IGameMode
 {
     private readonly FreeForAllSettings _settings
         = settings ?? throw new ArgumentNullException(nameof(settings));
+    public int DartsPerTurn => _settings.DartsPerTurn;
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new ClassicLegsScore

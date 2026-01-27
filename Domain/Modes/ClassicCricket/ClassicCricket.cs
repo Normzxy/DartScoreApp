@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Interfaces;
 using Domain.Modes.CutThroatCricket;
 using Domain.ValueObjects;
 
@@ -8,6 +9,7 @@ public class ClassicCricket(ClassicCricketSettings settings) : IGameMode
 {
     private readonly ClassicCricketSettings _settings
         = settings ?? throw new ArgumentNullException(nameof(settings));
+    public int DartsPerTurn => _settings.DartsPerTurn;
 
     public PlayerScore CreateInitialScore(Guid playerId)
         => new CricketScore

@@ -1,15 +1,20 @@
-﻿namespace Domain.Modes;
-using ValueObjects;
-using Entities;
+﻿using Domain.Entities;
+using Domain.Modes;
+using Domain.ValueObjects;
+
+namespace Domain.Interfaces;
 
 public interface IGameMode
 {
+    int DartsPerTurn { get; }
+
+    void ValidatePlayers(IReadOnlyCollection<Player> players);
+
     /// <summary>
     /// Creates a specific initial score state according to the specific game mode.
     /// </summary>
     PlayerScore CreateInitialScore(Guid playerId);
-    void ValidatePlayers(IReadOnlyCollection<Player> players);
-    
+
     /// <summary>
     /// Evaluates the result of a throw according to the specific game mode.
     /// </summary>

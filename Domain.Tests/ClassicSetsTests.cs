@@ -86,8 +86,8 @@ namespace Domain.Tests
         {
             var (_, mode, p1, _, _, _, allScores)
                 = Setup();
-            var dart = new ThrowData(20, 3);
 
+            var dart = new ThrowData(20, 3);
             var result = mode.EvaluateThrow(p1.Id, dart, allScores);
 
             Assert.Equal(ThrowOutcome.Continue, result.Outcome);

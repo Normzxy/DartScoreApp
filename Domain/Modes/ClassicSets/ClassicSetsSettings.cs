@@ -2,6 +2,7 @@
 
 public sealed class ClassicSetsSettings
 {
+    public int DartsPerTurn { get; }
     public int ScorePerLeg { get; }
     public int LegsToWinSet { get; }
     public int SetsToWinMatch { get; }
@@ -12,6 +13,7 @@ public sealed class ClassicSetsSettings
     private static readonly int[] AllowedStartingScores = [ 201, 301, 401, 501, 601, 701, 801, 901 ];
 
     public ClassicSetsSettings(
+        int dartsPerTurn = 3,
         int scorePerLeg = 501,
         int legsToWinSet = 3,
         int setsToWinMatch = 3,
@@ -19,6 +21,9 @@ public sealed class ClassicSetsSettings
         bool advantagesEnabled = false,
         int? suddenDeathWinningLeg = null)
     {
+        if (dartsPerTurn is not 3)
+            throw new ArgumentOutOfRangeException(nameof(dartsPerTurn));
+
         if (!AllowedStartingScores.Contains(scorePerLeg))
             throw new ArgumentOutOfRangeException(
                 nameof(scorePerLeg),
@@ -50,6 +55,7 @@ public sealed class ClassicSetsSettings
         else
             suddenDeathWinningLeg = null;
 
+        DartsPerTurn = dartsPerTurn;
         ScorePerLeg = scorePerLeg;
         LegsToWinSet = legsToWinSet;
         SetsToWinMatch = setsToWinMatch;
